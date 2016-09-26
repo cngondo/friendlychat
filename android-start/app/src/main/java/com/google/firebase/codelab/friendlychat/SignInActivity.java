@@ -57,12 +57,11 @@ public class SignInActivity extends AppCompatActivity implements
         //Initialize firebase authentication
         mFirebaseAuth = FirebaseAuth.getInstance();
 
-
         // Assign fields
         mSignInButton = (SignInButton) findViewById(R.id.sign_in_button);
 
         // Set click listeners
-        mSignInButton.setOnClickListener(this);
+        mSignInButton.setOnClickListener(SignInActivity.this);
 
         // Configure Google Sign In
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -73,8 +72,6 @@ public class SignInActivity extends AppCompatActivity implements
                 .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
                 .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
                 .build();
-
-        // Initialize FirebaseAuth
     }
 
     @Override
@@ -94,7 +91,7 @@ public class SignInActivity extends AppCompatActivity implements
         Toast.makeText(this, "Google Play Services error.", Toast.LENGTH_SHORT).show();
     }
 
-    //Signini in using the Google API Client
+    //Signin in using the Google API Client
     private void signIn(){
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
         startActivityForResult(signInIntent, RC_SIGN_IN);
@@ -129,11 +126,10 @@ public class SignInActivity extends AppCompatActivity implements
                         //Log to the console
                         Log.d(TAG, "signInWithCredential:onComplete:" + task.isSuccessful());
                         /*
-                        * If sign in is successful, move user to the next acttivity,
+                        * If sign in is successful, move user to the Main activity,
                         * else display an error message
                         * */
-
-                        if(task.isSuccessful()){
+                        if(!task.isSuccessful()){
                             Log.w(TAG, "signInWithCredential", task.getException());
                             Toast.makeText(SignInActivity.this, "Authentication failed.",
                                     Toast.LENGTH_SHORT).show();
