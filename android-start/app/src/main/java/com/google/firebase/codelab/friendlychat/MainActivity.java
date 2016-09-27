@@ -102,6 +102,7 @@ public class MainActivity extends AppCompatActivity
     private FirebaseUser mUser;
     private DatabaseReference mDatabase;
     private FirebaseRecyclerAdapter<FriendlyMessage, MessageViewHolder> mFirebaseAdapter;
+    private FirebaseRemoteConfig mFirebaseRemoteConfig;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,6 +111,27 @@ public class MainActivity extends AppCompatActivity
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         // Set default username is anonymous.
         mUsername = ANONYMOUS;
+
+        // Initialize Firebase Remote Config.
+        mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
+
+        //Define Firebase remote config settings
+        FirebaseRemoteConfigSettings firebaseRemoteConfigSettings =
+                new FirebaseRemoteConfigSettings.Builder()
+                .setDeveloperModeEnabled(true)
+                .build();
+        // Define default config values. Defaults are used when fetched config values are not
+        // available. Eg: if an error occurred fetching values from the server.
+        Map<String, Object> defaultConfigMap = new HashMap<>();
+        defaultConfigMap.put("friendly_message_length", 10L);
+
+        //Apply config settings and default value
+        mFirebaseRemoteConfig.setConfigSettings(firebaseRemoteConfigSettings);
+        mFirebaseRemoteConfig.setDefaults(defaultConfigMap);
+
+        //Fetch the remote config
+        fetchConfig();
+
 
         //Initialize firebase user
         mFirebaseAuth = FirebaseAuth.getInstance();
@@ -151,7 +173,7 @@ public class MainActivity extends AppCompatActivity
             protected void populateViewHolder(MessageViewHolder viewHolder, FriendlyMessage model, int position) {
                 mProgressBar.setVisibility(ProgressBar.INVISIBLE);
                 viewHolder.messageTextView.setText(model.getText());
-                viewHolder.messageTextView.setText(model.getName());
+                viewHolder.messengerTextView.setText(model.getName());
 
                 if(model.getPhotoUrl() == null){
                     viewHolder.messengerImageView
@@ -262,6 +284,9 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
+            case R.id.fresh_config_menu:
+                fetchConfig();
+                return true;
             case R.id.sign_out_menu:
                 //Sign out action
                 mFirebaseAuth.signOut();
@@ -280,5 +305,51 @@ public class MainActivity extends AppCompatActivity
         // be available.
         Log.d(TAG, "onConnectionFailed:" + connectionResult);
         Toast.makeText(this, "Google Play Services error.", Toast.LENGTH_SHORT).show();
+    }
+
+    public void fetchConfig(){
+        long cacheExpiration = 3600;
+        /*
+        * Set the cache expiration to "0" on developer mode
+        * */
+        if(mFirebaseRemoteConfig.getInfo().getConfigSettings().isDeveloperModeEnabled()){
+            cacheExpiration = 0;
+        }
+        mFirebaseRemoteConfig.fetch(cacheExpiration)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        /*
+                        * Make the fetched configurations available via this call
+                        * */
+                        mFirebaseRemoteConfig.activateFetched();
+                        applyRetrievedLengthLimit();
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        // There has been an error fetching the config
+                        Log.w(TAG, "Error fetching config: " +
+                                e.getMessage());
+                        applyRetrievedLengthLimit();
+                    }
+                });
+
+    }
+    /**
+     * Apply retrieved length limit to edit text field.
+     * This result may be fresh from the server or it may be from cached
+     * values.
+     */
+    private void applyRetrievedLengthLimit(){
+        Long friendly_msg_length =
+                mFirebaseRemoteConfig.getLong("friendly_message_length");
+        mMessageEditText.setFilters(
+                new InputFilter[] {
+                        new InputFilter.LengthFilter(friendly_msg_length.intValue())
+                }
+        );
+        Log.d(TAG, "FML is: " + friendly_msg_length);
     }
 }
