@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity
                 .addApi(Auth.GOOGLE_SIGN_IN_API)
                 .build();
 
-        // Initialize ProgressBar and RecyclerView.
+        // Initialize ProgressBar and RecyclerView
         mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
         mMessageRecyclerView = (RecyclerView) findViewById(R.id.messageRecyclerView);
         mLinearLayoutManager = new LinearLayoutManager(this);
@@ -215,6 +215,17 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view) {
                 // Send messages on click.
+                /*
+                * This updates the messages node with the new message
+                * */
+                FriendlyMessage friendlyMessage = new FriendlyMessage(
+                        mMessageEditText.getText().toString(),
+                        mUsername,
+                        mPhotoUrl
+                );
+                mDatabase.child(MESSAGES_CHILD).push().setValue(friendlyMessage);
+                //After sending the message we reset the child method
+                mMessageEditText.setText("");
             }
         });
     }
