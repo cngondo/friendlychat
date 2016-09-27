@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity
     private DatabaseReference mDatabase;
     private FirebaseRecyclerAdapter<FriendlyMessage, MessageViewHolder> mFirebaseAdapter;
     private FirebaseRemoteConfig mFirebaseRemoteConfig;
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,6 +112,9 @@ public class MainActivity extends AppCompatActivity
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         // Set default username is anonymous.
         mUsername = ANONYMOUS;
+
+        //Initialize firebase analytics
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         // Initialize Firebase Remote Config.
         mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
@@ -319,10 +323,17 @@ public class MainActivity extends AppCompatActivity
 
         if(requestCode == REQUEST_INVITE){
             if(resultCode == RESULT_OK){
+                Bundle payload = new Bundle();
+                payload.putString(FirebaseAnalytics.Param.VALUE, "sent");
+                mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SHARE, payload);
                 // Check how many invitations were sent.
                 String[] ids = AppInviteInvitation.getInvitationIds(resultCode, data);
                 Log.d(TAG, "Invitations sent: " + ids.length);
             } else {
+                Bundle payload = new Bundle();
+                payload.putString(FirebaseAnalytics.Param.VALUE, "not sent");
+                mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SHARE, payload);
+                //Toast the failed event to the user
                 Toast.makeText(MainActivity.this, "Sending Invitation Failed", Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "Failed to send invitation.");
             }
