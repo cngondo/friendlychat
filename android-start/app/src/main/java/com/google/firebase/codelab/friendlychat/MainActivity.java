@@ -105,6 +105,9 @@ public class MainActivity extends AppCompatActivity
     private FirebaseRemoteConfig mFirebaseRemoteConfig;
     private FirebaseAnalytics mFirebaseAnalytics;
 
+    //Google Adview
+    private AdView mAdView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -255,6 +258,12 @@ public class MainActivity extends AppCompatActivity
                 mMessageEditText.setText("");
             }
         });
+        /*
+        * Requesting the ads to be placed on the Adview after everything has loaded
+        * */
+        mAdView = (AdView) findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
     }
 
     @Override
@@ -266,16 +275,25 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onPause() {
+        if (mAdView != null) {
+            mAdView.pause();
+        }
         super.onPause();
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        if (mAdView != null) {
+            mAdView.resume();
+        }
     }
 
     @Override
     public void onDestroy() {
+        if (mAdView != null) {
+            mAdView.destroy();
+        }
         super.onDestroy();
     }
 
@@ -289,6 +307,10 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
+            case R.id.crash_menu:
+                FirebaseCrash.logcat(Log.ERROR, TAG, "Crash Caused");
+                causecrash();
+                return true;
             case R.id.invite_menu:
                 sendInvitation();
                 return  true;
@@ -392,6 +414,9 @@ public class MainActivity extends AppCompatActivity
                 .setCallToActionText(getString(R.string.invitation_cta))
                 .build();
         startActivityForResult(intent, REQUEST_INVITE);
+    }
 
+    private void causecrash(){
+        throw new NullPointerException("Fake Null pointer");
     }
 }
